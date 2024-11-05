@@ -51,11 +51,20 @@ function love.load()
     lwalk2 = love.graphics.newImage("walk2ninjitler - left.png")
     ljump = love.graphics.newImage("jumpninjitler - left.png")
 
+    weapon1 = love.graphics.newImage("weapon1ninjitler.png")
+    weapon2 = love.graphics.newImage("weapon2ninjitler.png")
+
+
     background = love.graphics.newImage("background.png")
 
     animationFrame = 1
     animationTime = 0
     frameDuration = 0.75
+
+    weaponanimationframe = 1
+    weaponanimationtime = 1
+    weaponframeDuration = 0.25
+
 end
 
 function love.update(dt)
@@ -95,6 +104,15 @@ function love.update(dt)
             animationFrame = animationFrame + 1
             if animationFrame > 2 then
                 animationFrame = 1
+            end
+        end
+
+        weaponanimationtime = weaponanimationtime + dt
+        if weaponanimationtime >= weaponframeDuration then
+            weaponanimationtime = weaponanimationtime - weaponframeDuration
+            weaponanimationframe = weaponanimationframe + 1
+            if weaponanimationframe > 2 then
+                weaponanimationframe = 1
             end
         end
     end
@@ -158,7 +176,11 @@ function love.draw()
                 love.graphics.clear()
             end
             for _, projectile in ipairs(projectiles) do
-                love.graphics.rectangle("fill", projectile.x, projectile.y, projectile.width, projectile.height)
+                if weaponanimationframe == 1 then
+                    love.graphics.draw(weapon1, projectile.x, projectile.y, 0)
+                elseif weaponanimationframe == 2 then
+                    love.graphics.draw(weapon2, projectile.x - 1, projectile.y - 1, 0)
+                end
             end
         end
     end
