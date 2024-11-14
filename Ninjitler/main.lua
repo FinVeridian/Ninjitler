@@ -31,6 +31,15 @@ function love.load()
   startBUTTw = 200
   startBUTTh = 50
 
+  optionBUTTx = startBUTTx
+  optionBUTTy = startBUTTy + 100
+  optionBUTTw = startBUTTw
+  optionBUTTh = startBUTTh
+
+  sQUITx = startBUTTx
+  sQUITy = optionBUTTy + 100
+  sQUITw = startBUTTw
+  sQUITh = startBUTTh
 
   groundlevelx = 0
   groundlevely = love.graphics.getHeight() - 50
@@ -120,6 +129,8 @@ function love.load()
 
   controlsjumpx = controlsleftx
   controlsjumpy = 400
+
+  love.graphics.setBlendMode("alpha")
 end
 
 function love.update(dt)
@@ -203,6 +214,10 @@ function love.draw()
 
           --start button
           love.graphics.rectangle("fill", startBUTTx, startBUTTy, startBUTTw, startBUTTh)
+
+          love.graphics.rectangle("fill", optionBUTTx, optionBUTTy, optionBUTTw, optionBUTTh)
+
+          love.graphics.rectangle("fill", sQUITx, sQUITy, sQUITw, sQUITh)
       end
       --controls
       if controls == true then
@@ -242,23 +257,27 @@ function love.draw()
           end
           --pause
           if pause == true then
-              love.graphics.clear()
+            love.graphics.setColor(0, 0, 0, .5)
+            love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+            love.graphics.setColor(255, 255, 255, 255)
 
-              love.graphics.rectangle("fill", resumebuttx, resumebutty, 100, 50) -- resume
-              love.graphics.rectangle("fill", optionsbuttx, optionsbutty, 100, 50) -- options
-              love.graphics.rectangle("fill", quitbuttx, quitbutty, 100, 50) -- quit
-          end
+            love.graphics.rectangle("fill", resumebuttx, resumebutty, 100, 50) -- resume
+            love.graphics.rectangle("fill", optionsbuttx, optionsbutty, 100, 50) -- options
+            love.graphics.rectangle("fill", quitbuttx, quitbutty, 100, 50) -- quit
+        end
           --options
           if options == true then
-              love.graphics.clear()
-
+            love.graphics.setColor(0, 0, 0, .5)
+            love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+            love.graphics.setColor(255, 255, 255, 255)
               love.graphics.rectangle("fill", opcontrolsx, opcontrolsy, 100, 50) -- edit controls
               love.graphics.rectangle("fill", opsoundx, opsoundy, 100, 50) -- sound
           end
           --controls settings
           if opcontrols == true then
-              love.graphics.clear()
-
+            love.graphics.setColor(0, 0, 0, .5)
+            love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+            love.graphics.setColor(255, 255, 255, 255)
               love.graphics.rectangle("fill", controlsleftx, controlslefty, 100, 50)
               love.graphics.print("click to edit keybind for moving left", 175, 100)
 
@@ -273,7 +292,9 @@ function love.draw()
           end
           --sound settings
           if opsound == true then
-
+            love.graphics.setColor(0, 0, 0, .5)
+            love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+            love.graphics.setColor(255, 255, 255, 255)
           end
           --projectiles
           for _, projectile in ipairs(projectiles) do
@@ -292,6 +313,12 @@ function love.mousepressed(x, y, k)
       if startgame == false and warning == false then
           if x > startBUTTx and x < startBUTTx + startBUTTw and y > startBUTTy and y < startBUTTy + startBUTTh then
               controls = true
+          end
+          if x > optionBUTTx and x < optionBUTTx + optionBUTTw and y > optionBUTTy and y < optionBUTTy + optionBUTTh then
+            options = true
+          end
+          if x > sQUITx and x < sQUITx + sQUITw and y > sQUITy and y < sQUITy + sQUITh then
+            love.window.close()
           end
       end
       if warning == true then
