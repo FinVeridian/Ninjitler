@@ -1,11 +1,13 @@
 -- add tutorial
--- add controls screen
--- add resume button to pause
--- add quit button to pause
--- add options button to pause
--- make pause screen translucent instead of opaque
--- add quit and options buttons to main menu
+-- add scrolling screen function
+-- add controls screen                                  done
+-- add resume button to pause                           done
+-- add quit button to pause                             done
+-- add options button to pause                          done
+-- make pause screen translucent instead of opaque      done
+-- add quit and options buttons to main menu            done kinda
 -- make menus navigable through arrow keys and enter
+-- add controller functionality
 
 
 function love.load()
@@ -23,6 +25,11 @@ function love.load()
   opcontrols = false
   opsound = false
   pause = false
+  dialogue = false
+
+  tutorial = false
+  level1 = false
+  level2 = false
 
   shoottime = 0
 
@@ -67,6 +74,7 @@ function love.load()
 
   facing = "right"
 
+  --sprites
   rwalk1 = love.graphics.newImage("walk1ninjitler - right.png")
   rwalk2 = love.graphics.newImage("walk2ninjitler - right.png")
   rjump = love.graphics.newImage("jumpninjitler - right.png")
@@ -77,9 +85,9 @@ function love.load()
   weapon1 = love.graphics.newImage("weapon1ninjitler.png")
   weapon2 = love.graphics.newImage("weapon2ninjitler.png")
 
-
   background = love.graphics.newImage("background.png")
 
+  --spriteframes
   animationFrame = 1
   animationTime = 0
   frameDuration = 0.75
@@ -88,6 +96,7 @@ function love.load()
   weaponanimationtime = 1
   weaponframeDuration = 0.25
 
+  --pause menu buttons
   resumebuttx = love.graphics.getWidth() / 2 - 100
   resumebutty = love.graphics.getHeight() / 2 - 150
 
@@ -97,27 +106,43 @@ function love.load()
   quitbuttx = resumebuttx
   quitbutty = resumebutty + 200
 
+  --options menu buttons
   opcontrolsx = 400
   opcontrolsy = 300
 
   opsoundx = 400
   opsoundy = 400
 
+  --controls
   jump1 = "up"
   jump2 = "w"
+  jump3 = "up"
   moveleft = "left"
   moveleft2 = "a"
+  moveleft3 = "left"
   moveright = "right"
   moveright2 = "d"
+  moveright3 = "right"
   shoot = "x"
+  shoot2 = "x"
+  shoot3 = "x"
 
   tempkey = ""
 
-  editcontrolsleft = false
-  editcontrolsright = false
-  editcontrolsshoot = false
-  editcontrolsjump = false
+  editcontrolsleft1 = false
+  editcontrolsleft2 = false
+  editcontrolsleft3 = false
+  editcontrolsright1 = false
+  editcontrolsright2 = false
+  editcontrolsright3 = false
+  editcontrolsshoot1 = false
+  editcontrolsshoot2 = false
+  editcontrolsshoot3 = false
+  editcontrolsjump1 = false
+  editcontrolsjump2 = false
+  editcontrolsjump3 = false
 
+  --controls menu buttons
   controlsleftx = 100
   controlslefty = 100
 
@@ -130,6 +155,7 @@ function love.load()
   controlsjumpx = controlsleftx
   controlsjumpy = 400
 
+  --audio menu buttons
   sliderX = 100
   sliderY = 200
   sliderWidth = 400
@@ -137,16 +163,23 @@ function love.load()
 
   sliderValue = 0.5
 
+  --music
   music = love.audio.newSource("music.mp3", "stream")
   music:setLooping(true)
+
+  screenwidth = love.graphics.getWidth()
+  screenheight = love.graphics.getHeight()
+  camerax = 0
+  scrollmargin = 250
+  worldwidth = 3200
 end
 
 function love.update(dt)
-
   if controls == true then
       if love.keyboard.isDown("space") then
           controls = false
           startgame = true
+          tutorial = true
       end
   end
 
@@ -154,12 +187,23 @@ function love.update(dt)
     music:play(music)
   end
 
-  if pause == false and startgame == true and options == false and opsound == false and opcontrols == false then
+  if pause == false and startgame == true and options == false and opsound == false and opcontrols == false and dialogue == false then
     time = time + dt
     shoottime = shoottime + dt
     if time >= 3 then
         warning = false
     end
+
+    if playerx < camerax + scrollmargin then
+      -- Player is too close to the left edge, scroll left
+      camerax = playerx - scrollmargin
+    elseif playerx > camerax + screenwidth - scrollmargin then
+      -- Player is too close to the right edge, scroll right
+      camerax = playerx - screenwidth + scrollmargin
+    end
+
+    camerax = math.max(0, math.min(camerax, worldwidth - screenwidth))
+
 
     if not isGrounded then
         velocityy = velocityy + gravity * dt
@@ -174,12 +218,12 @@ function love.update(dt)
     else
       isGrounded = false
     end
-      if love.keyboard.isDown(moveleft) or love.keyboard.isDown(moveleft2) then
+      if love.keyboard.isDown(moveleft) or love.keyboard.isDown(moveleft2) or love.keyboard.isDown(moveleft3) then
           playerx = playerx - 2.5
           facing = "left"
       end
 
-      if love.keyboard.isDown(moveright) or love.keyboard.isDown(moveright2) then
+      if love.keyboard.isDown(moveright) or love.keyboard.isDown(moveright2) or love.keyboard.isDown(moveright3) then
           playerx = playerx + 2.5
           facing = "right"
       end
@@ -257,6 +301,14 @@ function love.draw()
           --ground
           love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
 
+          --tutorial
+          if tutorial == true then
+
+          end
+
+          love.graphics.push()  -- Save the current drawing state
+          love.graphics.translate(-camerax, 0)
+
           --player
           if isGrounded then
               if facing == "right" then
@@ -279,6 +331,9 @@ function love.draw()
                   love.graphics.draw(ljump, playerx, playery, 0)
               end
           end
+
+          love.graphics.pop()
+
           --pause
           if pause == true then
             love.graphics.setColor(0, 0, 0, .5)
@@ -307,35 +362,29 @@ function love.draw()
             love.graphics.setColor(0, 0, 0, .5)
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
-            --left
-              love.graphics.print("left", 100, 65)
-              love.graphics.rectangle("line", 175, 50, 200, 50)
-              love.graphics.print(moveleft, 200, 65)
-              love.graphics.rectangle("line", 475, 50, 200, 50)
-              love.graphics.print(moveleft2, 500, 65)
-              love.graphics.rectangle("line", 775, 50, 200, 50)
-              --right
-              love.graphics.print("right", 100, 165)
-              love.graphics.rectangle("line", 175, 150, 200, 50)
-              love.graphics.print(moveright, 200, 165)
-              love.graphics.rectangle("line", 475, 150, 200, 50)
-              love.graphics.print(moveright2, 500, 165)
-              love.graphics.rectangle("line", 775, 150, 200, 50)
-              --jump
-              love.graphics.print("jump", 100, 265)
-              love.graphics.rectangle("line", 175, 250, 200, 50)
-              love.graphics.print(jump1, 200, 265)
-              love.graphics.rectangle("line", 475, 250, 200, 50)
-              love.graphics.print(jump2, 500, 265)
-              love.graphics.rectangle("line", 775, 250, 200, 50)
-              --shoot
-              love.graphics.print("shoot", 100, 365)
-              love.graphics.rectangle("line", 175, 350, 200, 50)
-              love.graphics.print(shoot, 200, 365)
-              love.graphics.rectangle("line", 475, 350, 200, 50)
-              --love.graphics.print(shoot, 500, 365)
-              love.graphics.rectangle("line", 775, 350, 200, 50)
+            -- Left controls
+            love.graphics.print("left", 100, 65)
+            drawControl(175, 50, 200, 50, moveleft, editcontrolsleft1)
+            drawControl(475, 50, 200, 50, moveleft2, editcontrolsleft2)
+            drawControl(775, 50, 200, 50, moveleft3, editcontrolsleft3)
 
+            -- Right controls
+            love.graphics.print("right", 100, 165)
+            drawControl(175, 150, 200, 50, moveright, editcontrolsright1)
+            drawControl(475, 150, 200, 50, moveright2, editcontrolsright2)
+            drawControl(775, 150, 200, 50, moveright3, editcontrolsright3)
+
+            -- Jump controls
+            love.graphics.print("jump", 100, 265)
+            drawControl(175, 250, 200, 50, jump1, editcontrolsjump1)
+            drawControl(475, 250, 200, 50, jump2, editcontrolsjump2)
+            drawControl(775, 250, 200, 50, jump3, editcontrolsjump3)
+
+            -- Shoot controls
+            love.graphics.print("shoot", 100, 365)
+            drawControl(175, 350, 200, 50, shoot, editcontrolsshoot1)
+            drawControl(475, 350, 200, 50, shoot2, editcontrolsshoot2)
+            drawControl(775, 350, 200, 50, shoot3, editcontrolsshoot3)
           end
           --sound settings
           if opsound == true then
@@ -343,16 +392,13 @@ function love.draw()
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
 
-            -- Draw slider background (a simple gray bar)
             love.graphics.setColor(0.5, 0.5, 0.5)
             love.graphics.rectangle("fill", sliderX, sliderY, sliderWidth, sliderHeight)
 
-            -- Draw slider knob (the draggable part)
             love.graphics.setColor(0, 0, 0)
-            local knobX = sliderX + sliderValue * sliderWidth - 10  -- Position the knob
-            love.graphics.rectangle("fill", knobX, sliderY - 10, 20, sliderHeight + 20)  -- Knob is a rectangle
+            knobX = sliderX + sliderValue * sliderWidth - 10
+            love.graphics.rectangle("fill", knobX, sliderY - 10, 20, sliderHeight + 20)
 
-            -- Draw the current volume as text (optional)
             love.graphics.setColor(1, 1, 1)
             love.graphics.print("Volume: " .. math.floor(sliderValue * 100) .. "%", 100, 100)
           end
@@ -407,7 +453,67 @@ function love.mousepressed(x, y, k)
           end
       end
       if opcontrols == true then
+        --left1
+        if x > 175 and x < 175 + 200 and y > 50 and y < 50 + 50 then
+          editcontrolsleft1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --left2
+        if x > 475 and x < 475 + 200 and y > 50 and y < 50 + 50 then
+          editcontrolsleft2 = true
+          love.keyboard.setTextInput(true)
 
+        end
+        --left3 / controller?
+        if x > 775 and x < 775 + 200 and y > 50 and y < 50 + 50 then
+          editcontrolsleft3 = true
+          love.keyboard.setTextInput(true)
+        end
+        --right1
+        if x > 175 and x < 175 + 200 and y > 150 and y < 50 + 150 then
+          editcontrolsright1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --right2
+        if x > 475 and x < 475 + 200 and y > 150 and y < 150 + 50 then
+          editcontrolsright2 = true
+          love.keyboard.setTextInput(true)
+        end
+        --right3 / controller?
+        if x > 775 and x < 775 + 200 and y > 150 and y < 150 + 50 then
+          editcontrolsright3 = true
+          love.keyboard.setTextInput(true)
+        end
+        --jump1
+        if x > 175 and x < 175 + 200 and y > 250 and y < 250 + 50 then
+          editcontrolsjump1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --jump2
+        if x > 475 and x < 475 + 200 and y > 250 and y < 250 + 50 then
+          editcontrolsjump2 = true
+          love.keyboard.setTextInput(true)
+        end
+        --jump3 / controller?
+        if x > 775 and x < 775 + 200 and y > 250 and y < 250 + 50 then
+          editcontrolsjump3 = true
+          love.keyboard.setTextInput(true)
+        end
+        --shoot1
+        if x > 175 and x < 175 + 200 and y > 350 and y < 350 + 50 then
+          editcontrolsshoot1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --shoot2
+        if x > 475 and x < 475 + 200 and y > 350 and y < 350 + 50 then
+          editcontrolsshoot2 = true
+          love.keyboard.setTextInput(true)
+        end
+        --shoot3 / controller?
+        if x > 775 and x < 775 + 200 and y > 350 and y < 350 + 50 then
+          editcontrolsshoot3 = true
+          love.keyboard.setTextInput(true)
+        end
       end
       if opsound == true then
         if x >= sliderX and x <= sliderX + sliderWidth and y >= sliderY and y <= sliderY + sliderHeight then
@@ -423,33 +529,6 @@ function love.mousereleased(x, y, k)
   end
 end
 
-function love.textInput(t)
-  if editcontrolsleft == true then
-      if t.size() >= 1 then
-          left = t
-          editcontrolsleft = false
-      end
-  end
-  if editcontrolsright == true then
-      if t.size() >= 1 then
-          right = t
-          editcontrolsright = false
-      end
-  end
-  if editcontrolsshoot == true then
-      if t.size() >= 1 then
-          shoot = t
-          editcontrolsshoot = false
-      end
-  end
-  if editcontrolsjump == true then
-      if t.size() >= 1 then
-          jump1 = t
-          editcontrolsjump = false
-      end
-  end
-end
-
 function love.keypressed(key, scancode)
   if startgame == true then
       --pause
@@ -458,7 +537,7 @@ function love.keypressed(key, scancode)
               pause = true
           end
 
-          if key == jump1 or key == jump2 then
+          if key == jump1 or key == jump2 or key == jump3 then
               if isGrounded or jump == 1 then
                   velocityy = -500
                   isGrounded = false
@@ -466,7 +545,7 @@ function love.keypressed(key, scancode)
               end
           end
 
-          if key == shoot and shoottime >= 1 then
+          if key == shoot  or key == shoot2 or key == shoot3 and shoottime >= 1 then
               shootProjectile()
               shoottime = 0
           end
@@ -501,6 +580,287 @@ function love.keypressed(key, scancode)
       love.event.quit()
     end
   end
+  --edit controls
+  --edit left
+  if editcontrolsleft1 == true then
+    if #key == 1 then
+      moveleft = key:lower()
+      editcontrolsleft1 = false
+    else
+      if key == "up" then
+        moveleft = "up"
+        editcontrolsleft1 = false
+      elseif key == "down" then
+        moveleft = "down"
+        editcontrolsleft1 = false
+      elseif key == "left" then
+        moveleft = "left"
+        editcontrolsleft1 = false
+      elseif key == "right" then
+        moveleft = "right"
+        editcontrolsleft1 = false
+      elseif key == "space" then
+        moveleft = "space"
+        editcontrolsleft1 = false
+      end
+    end
+  end
+  if editcontrolsleft2 == true then
+    if #key == 1 then
+      moveleft2 = key:lower()
+      editcontrolsleft2 = false
+    else
+      if key == "up" then
+        moveleft2 = "up"
+        editcontrolsleft2 = false
+      elseif key == "down" then
+        moveleft2 = "down"
+        editcontrolsleft2 = false
+      elseif key == "left" then
+        moveleft2 = "left"
+        editcontrolsleft2 = false
+      elseif key == "right" then
+        moveleft2 = "right"
+        editcontrolsleft2 = false
+      elseif key == "space" then
+        moveleft2 = "space"
+        editcontrolsleft2 = false
+      end
+    end
+  end
+  if editcontrolsleft3 == true then
+    if #key == 1 then
+      moveleft3 = key:lower()
+      editcontrolsleft3 = false
+    else
+      if key == "up" then
+        moveleft3 = "up"
+        editcontrolsleft3 = false
+      elseif key == "down" then
+        moveleft3 = "down"
+        editcontrolsleft3 = false
+      elseif key == "left" then
+        moveleft3 = "left"
+        editcontrolsleft3 = false
+      elseif key == "right" then
+        moveleft3 = "right"
+        editcontrolsleft3 = false
+      elseif key == "space" then
+        moveleft3 = "space"
+        editcontrolsleft3 = false
+      end
+    end
+  end
+  --edit right
+  if editcontrolsright1 == true then
+    if #key == 1 then
+      moveright = key:lower()
+      editcontrolsright1 = false
+    else
+      if key == "up" then
+        moveright = "up"
+        editcontrolsright1 = false
+      elseif key == "down" then
+        moveright = "down"
+        editcontrolsright1 = false
+      elseif key == "left" then
+        moveright = "left"
+        editcontrolsright1 = false
+      elseif key == "right" then
+        moveright = "right"
+        editcontrolsright1 = false
+      elseif key == "space" then
+        moveright = "space"
+        editcontrolsright1 = false
+      end
+    end
+  end
+  if editcontrolsright2 == true then
+    if #key == 1 then
+      moveright2 = key:lower()
+      editcontrolsright2 = false
+    else
+      if key == "up" then
+        moveright2 = "up"
+        editcontrolsright2 = false
+      elseif key == "down" then
+        moveright2 = "down"
+        editcontrolsright2 = false
+      elseif key == "left" then
+        moveright2 = "left"
+        editcontrolsright2 = false
+      elseif key == "right" then
+        moveright2 = "right"
+        editcontrolsright2 = false
+      elseif key == "space" then
+        moveright2 = "space"
+        editcontrolsright2 = false
+      end
+    end
+  end
+  if editcontrolsright3 == true then
+    if #key == 1 then
+      moveright3 = key:lower()
+      editcontrolsright3 = false
+    else
+      if key == "up" then
+        moveright3 = "up"
+        editcontrolsright3 = false
+      elseif key == "down" then
+        moveright3 = "down"
+        editcontrolsright3 = false
+      elseif key == "left" then
+        moveright3 = "left"
+        editcontrolsright3 = false
+      elseif key == "right" then
+        moveright3 = "right"
+        editcontrolsright3 = false
+      elseif key == "space" then
+        moveright3 = "space"
+        editcontrolsright3 = false
+      end
+    end
+  end
+  --edit jump
+  if editcontrolsjump1 == true then
+    if #key == 1 then
+      jump1 = key:lower()
+      editcontrolsjump1 = false
+    else
+      if key == "up" then
+        jump1 = "up"
+        editcontrolsjump1 = false
+      elseif key == "down" then
+        jump1 = "down"
+        editcontrolsjump1 = false
+      elseif key == "left" then
+        jump1 = "left"
+        editcontrolsjump1 = false
+      elseif key == "right" then
+        jump1 = "right"
+        editcontrolsjump1 = false
+      elseif key == "space" then
+        jump1 = "space"
+        editcontrolsjump1 = false
+      end
+    end
+  end
+  if editcontrolsjump2 == true then
+    if #key == 1 then
+      jump2 = key:lower()
+      editcontrolsjump2 = false
+    else
+      if key == "up" then
+        jump2 = "up"
+        editcontrolsjump2 = false
+      elseif key == "down" then
+        jump2 = "down"
+        editcontrolsjump2 = false
+      elseif key == "left" then
+        jump2 = "left"
+        editcontrolsjump2 = false
+      elseif key == "right" then
+        jump2 = "right"
+        editcontrolsjump2 = false
+      elseif key == "space" then
+        jump2 = "space"
+        editcontrolsjump2 = false
+      end
+    end
+  end
+  if editcontrolsjump3 == true then
+    if #key == 1 then
+      jump3 = key:lower()
+      editcontrolsjump3 = false
+    else
+      if key == "up" then
+        jump3 = "up"
+        editcontrolsjump3 = false
+      elseif key == "down" then
+        jump3 = "down"
+        editcontrolsjump3 = false
+      elseif key == "left" then
+        jump3 = "left"
+        editcontrolsjump3 = false
+      elseif key == "right" then
+        jump3 = "right"
+        editcontrolsjump3 = false
+      elseif key == "space" then
+        jump3 = "space"
+        editcontrolsjump3 = false
+      end
+    end
+  end
+  --edit shoot
+  if editcontrolsshoot1 == true then
+    if #key == 1 then
+      shoot = key:lower()
+      editcontrolsshoot1 = false
+    else
+      if key == "up" then
+        shoot = "up"
+        editcontrolsshoot1 = false
+      elseif key == "down" then
+        shoot = "down"
+        editcontrolsshoot1 = false
+      elseif key == "left" then
+        shoot = "left"
+        editcontrolsshoot1 = false
+      elseif key == "right" then
+        shoot = "right"
+        editcontrolsshoot1 = false
+      elseif key == "space" then
+        shoot = "space"
+        editcontrolsshoot1 = false
+      end
+    end
+  end
+  if editcontrolsshoot2 == true then
+    if #key == 1 then
+      shoot2 = key:lower()
+      editcontrolsshoot2 = false
+    else
+      if key == "up" then
+        shoot2 = "up"
+        editcontrolsshoot2 = false
+      elseif key == "down" then
+        shoot2 = "down"
+        editcontrolsshoot2 = false
+      elseif key == "left" then
+        shoot2 = "left"
+        editcontrolsshoot2 = false
+      elseif key == "right" then
+        shoot2 = "right"
+        editcontrolsshoot2 = false
+      elseif key == "space" then
+        shoot2 = "space"
+        editcontrolsshoot2 = false
+      end
+    end
+  end
+  if editcontrolsshoot3 == true then
+    if #key == 1 then
+      shoot3 = key:lower()
+      editcontrolsshoot3 = false
+    else
+      if key == "up" then
+        shoot3 = "up"
+        editcontrolsshoot3 = false
+      elseif key == "down" then
+        shoot3 = "down"
+        editcontrolsshoot3 = false
+      elseif key == "left" then
+        shoot3 = "left"
+        editcontrolsshoot3 = false
+      elseif key == "right" then
+        shoot3 = "right"
+        editcontrolsshoot3 = false
+      elseif key == "space" then
+        shoot3 = "space"
+        editcontrolsshoot3 = false
+      end
+    end
+  end
 end
 
 function shootProjectile()
@@ -520,4 +880,17 @@ function shootProjectile()
       direction = facing
   }
   table.insert(projectiles, projectile)
+end
+
+function drawControl(x, y, width, height, label, controlVar)
+  -- Check if we're editing this control
+  if controlVar then
+      love.graphics.setColor(255, 0, 0)  -- Highlight the control in red
+  else
+      love.graphics.setColor(255, 255, 255)  -- Default color
+  end
+  -- Draw the rectangle for the control
+  love.graphics.rectangle("line", x, y, width, height)
+  -- Draw the label
+  love.graphics.print(label, x + 25, y + 15)
 end
