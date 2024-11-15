@@ -130,7 +130,15 @@ function love.load()
   controlsjumpx = controlsleftx
   controlsjumpy = 400
 
-  love.graphics.setBlendMode("alpha")
+  sliderX = 100
+  sliderY = 200
+  sliderWidth = 400
+  sliderHeight = 20
+
+  sliderValue = 0.5
+
+  music = love.audio.newSource("music.mp3", "stream")
+  music:setLooping(true)
 end
 
 function love.update(dt)
@@ -141,6 +149,11 @@ function love.update(dt)
           startgame = true
       end
   end
+
+  if startgame == true then
+    music:play(music)
+  end
+
   if pause == false and startgame == true and options == false and opsound == false and opcontrols == false then
     time = time + dt
     shoottime = shoottime + dt
@@ -199,6 +212,13 @@ function love.update(dt)
         if projectile.x > love.graphics.getWidth() then
             table.remove(projectiles, i)
         end
+    end
+  end
+  if opsound == true then
+    if isDragging then
+      local mouseX = love.mouse.getX()
+      sliderValue = math.min(math.max((mouseX - sliderX) / sliderWidth, 0), 1)
+      music:setVolume(sliderValue)  -- Set music volume to the slider value
     end
   end
 end
@@ -322,6 +342,19 @@ function love.draw()
             love.graphics.setColor(0, 0, 0, .5)
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
+
+            -- Draw slider background (a simple gray bar)
+            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.rectangle("fill", sliderX, sliderY, sliderWidth, sliderHeight)
+
+            -- Draw slider knob (the draggable part)
+            love.graphics.setColor(0, 0, 0)
+            local knobX = sliderX + sliderValue * sliderWidth - 10  -- Position the knob
+            love.graphics.rectangle("fill", knobX, sliderY - 10, 20, sliderHeight + 20)  -- Knob is a rectangle
+
+            -- Draw the current volume as text (optional)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print("Volume: " .. math.floor(sliderValue * 100) .. "%", 100, 100)
           end
           --projectiles
           for _, projectile in ipairs(projectiles) do
@@ -376,6 +409,17 @@ function love.mousepressed(x, y, k)
       if opcontrols == true then
 
       end
+      if opsound == true then
+        if x >= sliderX and x <= sliderX + sliderWidth and y >= sliderY and y <= sliderY + sliderHeight then
+          isDragging = true
+        end
+      end
+  end
+end
+
+function love.mousereleased(x, y, k)
+  if opsound == true then
+    isDragging = false
   end
 end
 
