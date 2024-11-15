@@ -1,13 +1,24 @@
 -- add tutorial
--- add scrolling screen function
+-- add scrolling screen function                        done
 -- add controls screen                                  done
 -- add resume button to pause                           done
 -- add quit button to pause                             done
 -- add options button to pause                          done
 -- make pause screen translucent instead of opaque      done
--- add quit and options buttons to main menu            done kinda
+-- add quit and options buttons to main menu            done (not options)
 -- make menus navigable through arrow keys and enter
 -- add controller functionality
+
+-- total of 10 levels (not including tutorial)
+
+-- Neville Chamberlain = Tutorial Boss (EXTREMELY EASY) in Munich
+-- Albert Lebrun (French President) = Level 1 Boss (RELATIVELY EASY) in Paris
+-- King Christian X (Danish King) = Level 2 Boss (EASY) in Copenhagen
+-- King Leopold III (Belgian King) = Level 3 Boss (SLIGHTLY HARDER) in Brussels
+--
+-- General Rydz-Śmigły (Polish General) = Level 5 Boss (VERY HARD) in Warsaw
+
+-- 1512 x 915
 
 
 function love.load()
@@ -86,6 +97,7 @@ function love.load()
   weapon2 = love.graphics.newImage("weapon2ninjitler.png")
 
   background = love.graphics.newImage("background.png")
+  tutorialbg = love.graphics.newImage("tutorialbg.png")
 
   --spriteframes
   animationFrame = 1
@@ -253,7 +265,7 @@ function love.update(dt)
         elseif projectile.direction == "left" then
             projectile.x = projectile.x - projectileSpeed * dt
         end
-        if projectile.x > love.graphics.getWidth() then
+        if projectile.x > love.graphics.getWidth() + camerax then
             table.remove(projectiles, i)
         end
     end
@@ -297,16 +309,29 @@ function love.draw()
       end
       if startgame == true then
           --background
-          love.graphics.draw(background, 0, 0)
+          --love.graphics.draw(background, 0, 0)
           --ground
-          love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
+          --love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
 
           --tutorial
           if tutorial == true then
+            --background
+            love.graphics.draw(tutorialbg, 0, 0)
+
+            --ground
+            love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
+
+            --welcome text
+            love.graphics.setColor(0, 0, 0, .8)
+            love.graphics.rectangle("fill", 100 - camerax, 100, 500, 100)
+            love.graphics.setColor(255, 255, 255, 1)
+            love.graphics.print("Wilkommen aus München! (you're not getting anymore German out of me)", 125 - camerax, 125)
+            love.graphics.print("Neville Chamberlain is here. go meet him!", 125 - camerax, 165)
+
 
           end
 
-          love.graphics.push()  -- Save the current drawing state
+          love.graphics.push()
           love.graphics.translate(-camerax, 0)
 
           --player
@@ -405,9 +430,9 @@ function love.draw()
           --projectiles
           for _, projectile in ipairs(projectiles) do
               if weaponanimationframe == 1 then
-                  love.graphics.draw(weapon1, projectile.x, projectile.y, 0)
+                  love.graphics.draw(weapon1, projectile.x - camerax, projectile.y, 0)
               elseif weaponanimationframe == 2 then
-                  love.graphics.draw(weapon2, projectile.x - 1, projectile.y - 1, 0)
+                  love.graphics.draw(weapon2, projectile.x - 1 - camerax, projectile.y - 1, 0)
               end
           end
       end
@@ -545,7 +570,7 @@ function love.keypressed(key, scancode)
               end
           end
 
-          if key == shoot  or key == shoot2 or key == shoot3 and shoottime >= 1 then
+          if (key == shoot or key == shoot2 or key == shoot3) and shoottime >= 1 then
               shootProjectile()
               shoottime = 0
           end
