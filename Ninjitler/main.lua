@@ -12,7 +12,7 @@ function love.load()
   love.window.setMode(1000, 1000, {resizable = true})
   love.window.maximize()
 
-  titlex = love.graphics.getWidth() / 2
+  titlex = love.graphics.getWidth() / 2 - 25
   titley = love.graphics.getHeight() / 2
 
   warning = true
@@ -88,7 +88,7 @@ function love.load()
   weaponanimationtime = 1
   weaponframeDuration = 0.25
 
-  resumebuttx = love.graphics.getWidth() / 2
+  resumebuttx = love.graphics.getWidth() / 2 - 100
   resumebutty = love.graphics.getHeight() / 2 - 150
 
   optionsbuttx = resumebuttx
@@ -97,11 +97,11 @@ function love.load()
   quitbuttx = resumebuttx
   quitbutty = resumebutty + 200
 
-  opcontrolsx = 100
-  opcontrolsy = 100
+  opcontrolsx = 400
+  opcontrolsy = 300
 
-  opsoundx = 100
-  opsoundy = 200
+  opsoundx = 400
+  opsoundy = 400
 
   jump1 = "up"
   jump2 = "w"
@@ -134,38 +134,39 @@ function love.load()
 end
 
 function love.update(dt)
-  time = time + dt
-  shoottime = shoottime + dt
-  if time >= 3 then
-      warning = false
-  end
 
-  if not isGrounded then
-      velocityy = velocityy + gravity * dt
-      playery = playery + velocityy * dt
-  end
-
-  if playery + playerh >= groundlevely then
-      playery = groundlevely - playerh
-      velocityy = 0
-      isGrounded = true
-      jump = 0
-  else
-      isGrounded = false
-  end
   if controls == true then
       if love.keyboard.isDown("space") then
           controls = false
           startgame = true
       end
   end
-  if pause == false and startgame == true then
-      if love.keyboard.isDown(moveleft or moveleft2) then
+  if pause == false and startgame == true and options == false and opsound == false and opcontrols == false then
+    time = time + dt
+    shoottime = shoottime + dt
+    if time >= 3 then
+        warning = false
+    end
+
+    if not isGrounded then
+        velocityy = velocityy + gravity * dt
+        playery = playery + velocityy * dt
+    end
+
+    if playery + playerh >= groundlevely then
+      playery = groundlevely - playerh
+      velocityy = 0
+      isGrounded = true
+      jump = 0
+    else
+      isGrounded = false
+    end
+      if love.keyboard.isDown(moveleft) or love.keyboard.isDown(moveleft2) then
           playerx = playerx - 2.5
           facing = "left"
       end
 
-      if love.keyboard.isDown(moveright or moveright2) then
+      if love.keyboard.isDown(moveright) or love.keyboard.isDown(moveright2) then
           playerx = playerx + 2.5
           facing = "right"
       end
@@ -187,18 +188,18 @@ function love.update(dt)
               weaponanimationframe = 1
           end
       end
-  end
 
-  for i = #projectiles, 1, -1 do
-      local projectile = projectiles[i]
-      if projectile.direction == "right" then
-          projectile.x = projectile.x + projectileSpeed * dt
-      elseif projectile.direction == "left" then
-          projectile.x = projectile.x - projectileSpeed * dt
-      end
-      if projectile.x > love.graphics.getWidth() then
-          table.remove(projectiles, i)
-      end
+      for i = #projectiles, 1, -1 do
+        local projectile = projectiles[i]
+        if projectile.direction == "right" then
+            projectile.x = projectile.x + projectileSpeed * dt
+        elseif projectile.direction == "left" then
+            projectile.x = projectile.x - projectileSpeed * dt
+        end
+        if projectile.x > love.graphics.getWidth() then
+            table.remove(projectiles, i)
+        end
+    end
   end
 end
 
@@ -213,18 +214,21 @@ function love.draw()
           love.graphics.print("NINJITLER", titlex, titley)
 
           --start button
-          love.graphics.rectangle("fill", startBUTTx, startBUTTy, startBUTTw, startBUTTh)
-
-          love.graphics.rectangle("fill", optionBUTTx, optionBUTTy, optionBUTTw, optionBUTTh)
-
-          love.graphics.rectangle("fill", sQUITx, sQUITy, sQUITw, sQUITh)
+          love.graphics.rectangle("line", startBUTTx, startBUTTy, startBUTTw, startBUTTh)
+          love.graphics.print("START GAME", startBUTTx + 60, startBUTTy + 15)
+          --options on start screen
+          --love.graphics.rectangle("line", optionBUTTx, optionBUTTy, optionBUTTw, optionBUTTh)
+          --quit button
+          love.graphics.rectangle("line", sQUITx, sQUITy, sQUITw, sQUITh)
+          love.graphics.print("QUIT", sQUITx + 80, sQUITy + 15)
       end
       --controls
       if controls == true then
           love.graphics.clear()
-          love.graphics.print("arrow keys or wasd to move", 100, 100)
-          love.graphics.print("x to shoot swastiken", 100, 150)
-          love.graphics.print("up or w to jump", 100, 200)
+          love.graphics.print(moveleft .. " or " .. moveleft2 .. " to move left", 100, 100)
+          love.graphics.print(moveright .. " or " .. moveright2 .. " to move right", 100, 150)
+          love.graphics.print(shoot  .. " to shoot swastiken", 100, 200)
+          love.graphics.print(jump1 .. " or " .. jump2 .. " to jump", 100, 250)
           love.graphics.print("press space to continue", love.graphics.getWidth() / 2, love.graphics.getHeight() - 250)
       end
       if startgame == true then
@@ -261,34 +265,57 @@ function love.draw()
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
 
-            love.graphics.rectangle("fill", resumebuttx, resumebutty, 100, 50) -- resume
-            love.graphics.rectangle("fill", optionsbuttx, optionsbutty, 100, 50) -- options
-            love.graphics.rectangle("fill", quitbuttx, quitbutty, 100, 50) -- quit
+            love.graphics.rectangle("line", resumebuttx, resumebutty, 200, 50) -- resume
+            love.graphics.print("resume", resumebuttx + 75, resumebutty + 15)
+            love.graphics.rectangle("line", optionsbuttx, optionsbutty, 200, 50) -- options
+            love.graphics.print("options", optionsbuttx + 75, optionsbutty + 15)
+            love.graphics.rectangle("line", quitbuttx, quitbutty, 200, 50) -- quit
+            love.graphics.print("quit", quitbuttx + 75, quitbutty + 15)
         end
           --options
           if options == true then
             love.graphics.setColor(0, 0, 0, .5)
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
-              love.graphics.rectangle("fill", opcontrolsx, opcontrolsy, 100, 50) -- edit controls
-              love.graphics.rectangle("fill", opsoundx, opsoundy, 100, 50) -- sound
+              love.graphics.rectangle("line", opcontrolsx, opcontrolsy, 200, 50) -- edit controls
+              love.graphics.print("controls", opcontrolsx + 75, opcontrolsy + 15)
+              love.graphics.rectangle("line", opsoundx, opsoundy, 200, 50) -- sound
+              love.graphics.print("audio", opsoundx + 75, opsoundy + 15)
           end
           --controls settings
           if opcontrols == true then
             love.graphics.setColor(0, 0, 0, .5)
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
-              love.graphics.rectangle("fill", controlsleftx, controlslefty, 100, 50)
-              love.graphics.print("click to edit keybind for moving left", 175, 100)
+            --left
+              love.graphics.print("left", 100, 65)
+              love.graphics.rectangle("line", 175, 50, 200, 50)
+              love.graphics.print(moveleft, 200, 65)
+              love.graphics.rectangle("line", 475, 50, 200, 50)
+              love.graphics.print(moveleft2, 500, 65)
+              love.graphics.rectangle("line", 775, 50, 200, 50)
+              --right
+              love.graphics.print("right", 100, 165)
+              love.graphics.rectangle("line", 175, 150, 200, 50)
+              love.graphics.print(moveright, 200, 165)
+              love.graphics.rectangle("line", 475, 150, 200, 50)
+              love.graphics.print(moveright2, 500, 165)
+              love.graphics.rectangle("line", 775, 150, 200, 50)
+              --jump
+              love.graphics.print("jump", 100, 265)
+              love.graphics.rectangle("line", 175, 250, 200, 50)
+              love.graphics.print(jump1, 200, 265)
+              love.graphics.rectangle("line", 475, 250, 200, 50)
+              love.graphics.print(jump2, 500, 265)
+              love.graphics.rectangle("line", 775, 250, 200, 50)
+              --shoot
+              love.graphics.print("shoot", 100, 365)
+              love.graphics.rectangle("line", 175, 350, 200, 50)
+              love.graphics.print(shoot, 200, 365)
+              love.graphics.rectangle("line", 475, 350, 200, 50)
+              --love.graphics.print(shoot, 500, 365)
+              love.graphics.rectangle("line", 775, 350, 200, 50)
 
-              love.graphics.rectangle("fill", controlsrightx, controlsrighty, 100, 50)
-              love.graphics.print("click to edit keybind for moving right", 175, 200)
-
-              love.graphics.rectangle("fill", controlsshootx, controlsshooty, 100, 50)
-              love.graphics.print("click to edit keybind for throwing swastikens", 175, 300)
-
-              love.graphics.rectangle("fill", controlsjumpx, controlsjumpy, 100, 50)
-              love.graphics.print("click to edit keybind for jumping", 175, 400)
           end
           --sound settings
           if opsound == true then
@@ -314,52 +341,40 @@ function love.mousepressed(x, y, k)
           if x > startBUTTx and x < startBUTTx + startBUTTw and y > startBUTTy and y < startBUTTy + startBUTTh then
               controls = true
           end
-          if x > optionBUTTx and x < optionBUTTx + optionBUTTw and y > optionBUTTy and y < optionBUTTy + optionBUTTh then
-            options = true
-          end
+          --if x > optionBUTTx and x < optionBUTTx + optionBUTTw and y > optionBUTTy and y < optionBUTTy + optionBUTTh then
+          --end
           if x > sQUITx and x < sQUITx + sQUITw and y > sQUITy and y < sQUITy + sQUITh then
-            love.window.close()
+            love.event.quit()
           end
       end
       if warning == true then
           warning = false
       end
       if pause == true then
-          if x > resumebuttx and x < resumebuttx + 100 and y > resumebutty and y < resumebutty + 50 then
+          if x > resumebuttx and x < resumebuttx + 200 and y > resumebutty and y < resumebutty + 50 then
               pause = false
           end
-          if x > optionsbuttx and x < optionsbuttx + 100 and y > optionsbutty and y < optionsbutty + 50 then
+          if x > optionsbuttx and x < optionsbuttx + 200 and y > optionsbutty and y < optionsbutty + 50 then
               options = true
               pause = false
           end
-          if x > quitbuttx and x < quitbuttx + 100 and y > quitbutty and y < quitbutty + 50 then
+          if x > quitbuttx and x < quitbuttx + 200 and y > quitbutty and y < quitbutty + 50 then
               pause = false
               startgame = false
           end
       end
-      if options == true then
-          if x > opcontrolsx and x < opcontrolsx + 100 and y > opcontrolsy and y < opcontrolsy + 50 then
+      if options == true  or startoptions == true then
+          if x > opcontrolsx and x < opcontrolsx + 200 and y > opcontrolsy and y < opcontrolsy + 50 then
               options = false
               opcontrols = true
           end
-          if x > opsoundx and x < opsoundx + 100 and y > opsoundy and y < opsoundy + 50 then
+          if x > opsoundx and x < opsoundx + 200 and y > opsoundy and y < opsoundy + 50 then
               options = false
               opsound = true
           end
       end
       if opcontrols == true then
-          if x > controlsleftx and x < controlsleftx + 100 and y > controlslefty and y < controlslefty + 50 then
-              editcontrolsleft = true
-          end
-          if x > controlsrightx and x < controlsrightx + 100 and y > controlsrighty and y < controlsrighty + 50 then
-              editcontrolsright = true
-          end
-          if x > controlsshootx and x < controlsshootx + 100 and y > controlsshooty and y < controlsshooty + 50 then
-              editcontrolsshoot = true
-          end
-          if x > controlsjumpx and x < controlsjumpx + 100 and y > controlsjumpy and y < controlsjumpy + 50 then
-              editcontrolsjump = true
-          end
+
       end
   end
 end
@@ -394,7 +409,7 @@ end
 function love.keypressed(key, scancode)
   if startgame == true then
       --pause
-      if pause == false then
+      if pause == false and options == false and opcontrols == false and opsound == false then
           if key == "escape" then
               pause = true
           end
@@ -430,6 +445,17 @@ function love.keypressed(key, scancode)
               options = true
           end
       end
+      if opsound == true then
+        if key == "escape" then
+          opsound = false
+          options = true
+        end
+      end
+  end
+  if startgame == false then
+    if key == "escape" then
+      love.event.quit()
+    end
   end
 end
 
