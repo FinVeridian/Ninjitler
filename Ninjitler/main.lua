@@ -68,6 +68,7 @@ function love.load()
   playery = groundlevely - 100
   playerw = 50
   playerh = 100
+  playerspeed = 2.5
 
   love.keyboard.setKeyRepeat(true)
 
@@ -184,9 +185,12 @@ function love.load()
   camerax = 0
   scrollmargin = 250
   worldwidth = 3200
+
+  --tutorial obstacles
 end
 
 function love.update(dt)
+  originalX = playerx
   if controls == true then
       if love.keyboard.isDown("space") then
           controls = false
@@ -222,8 +226,7 @@ function love.update(dt)
         playery = playery + velocityy * dt
     end
 
-    if playery + playerh >= groundlevely then
-      playery = groundlevely - playerh
+    if (playery + playerh >= groundlevely) or (playerx < obx + obw and playerx + playerw > obx and playery + playerh <= oby + 5 and playery + playerh > oby) then
       velocityy = 0
       isGrounded = true
       jump = 0
@@ -231,12 +234,12 @@ function love.update(dt)
       isGrounded = false
     end
       if love.keyboard.isDown(moveleft) or love.keyboard.isDown(moveleft2) or love.keyboard.isDown(moveleft3) then
-          playerx = playerx - 2.5
+          playerx = playerx - playerspeed
           facing = "left"
       end
 
       if love.keyboard.isDown(moveright) or love.keyboard.isDown(moveright2) or love.keyboard.isDown(moveright3) then
-          playerx = playerx + 2.5
+          playerx = playerx + playerspeed
           facing = "right"
       end
 
@@ -328,7 +331,7 @@ function love.draw()
             love.graphics.print("Wilkommen aus München! (you're not getting anymore German out of me)", 125 - camerax, 125)
             love.graphics.print("Neville Chamberlain is here. go meet him!", 125 - camerax, 165)
 
-
+            drawobstacle(1000, 400, 100, 500)
           end
 
           love.graphics.push()
@@ -918,4 +921,32 @@ function drawControl(x, y, width, height, label, controlVar)
   love.graphics.rectangle("line", x, y, width, height)
   -- Draw the label
   love.graphics.print(label, x + 25, y + 15)
+end
+
+function drawobstacle(x, y, width, height, texture)
+  obw = width
+  obh = height
+  oby = y
+  obx = x
+  -- Draw the obstacle
+  love.graphics.rectangle("fill", x - camerax, y, width, height)
+
+  if checkCollision(playerx, playery, playerw, playerh, x, y, width, height) then
+    -- If moving left and colliding, revert the player's position
+    if facing == "left" then
+        playerx = originalX -- Revert to previous position to prevent passing through obstacle
+    end
+    -- If moving right and colliding, revert the player's position
+    if facing == "right" then
+        playerx = originalX -- Revert to previous position to prevent passing through obstacle
+    end
+  end
+end
+
+function checkCollision(px, py, pw, ph, ox, oy, ow, oh)
+  -- Check if player collides with the obstacle using AABB (Axis-Aligned Bounding Box) method
+  return px < ox + ow and
+         px + pw > ox and
+         py < oy + oh and
+         py + ph > oy
 end
