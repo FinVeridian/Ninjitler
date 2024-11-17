@@ -186,7 +186,12 @@ function love.load()
   scrollmargin = 250
   worldwidth = 3200
 
-  --tutorial obstacles
+  buttons = {
+    {label = "START GAME", x = startBUTTx, y = startBUTTy, width = startBUTTw, height = startBUTTh},
+    {label = "OPTIONS", x = optionBUTTx, y = optionBUTTy, width = optionBUTTw, height = optionBUTTh},
+    {label = "QUIT", x = sQUITx, y = sQUITy, width = sQUITw, height = sQUITh}
+  }
+  selectedButton = 1
 end
 
 function love.update(dt)
@@ -268,7 +273,7 @@ function love.update(dt)
         elseif projectile.direction == "left" then
             projectile.x = projectile.x - projectileSpeed * dt
         end
-        if projectile.x > love.graphics.getWidth() + camerax then
+        if projectile.x > love.graphics.getWidth() + camerax or (projectile.x >= obx and projectile.x <= obx + obw and projectile.y >= oby and projectile.y <= oby + obh) then
             table.remove(projectiles, i)
         end
     end
@@ -292,14 +297,9 @@ function love.draw()
           --title
           love.graphics.print("NINJITLER", titlex, titley)
 
-          --start button
-          love.graphics.rectangle("line", startBUTTx, startBUTTy, startBUTTw, startBUTTh)
-          love.graphics.print("START GAME", startBUTTx + 60, startBUTTy + 15)
-          --options on start screen
-          --love.graphics.rectangle("line", optionBUTTx, optionBUTTy, optionBUTTw, optionBUTTh)
-          --quit button
-          love.graphics.rectangle("line", sQUITx, sQUITy, sQUITw, sQUITh)
-          love.graphics.print("QUIT", sQUITx + 80, sQUITy + 15)
+          for i, button in ipairs(buttons) do
+            drawButton(button.x, button.y, button.width, button.height, button.label, i == selectedButton)
+          end
       end
       --controls
       if controls == true then
@@ -558,6 +558,22 @@ function love.mousereleased(x, y, k)
 end
 
 function love.keypressed(key, scancode)
+  if startgame == false and warning == false and controls == false then
+    if key == "down" then
+      selectedButton = selectedButton % #buttons + 1
+    elseif key == "up" then
+      selectedButton = (selectedButton - 2) % #buttons + 1
+    end
+    if key == "return" then
+      if selectedButton == 1 then -- start game
+        controls = true
+      elseif selectedButton == 2 then -- options
+
+      elseif selectedButton == 3 then -- quit
+        love.event.quit()
+      end
+    end
+  end
   if startgame == true then
       --pause
       if pause == false and options == false and opcontrols == false and opsound == false then
@@ -923,13 +939,28 @@ function drawControl(x, y, width, height, label, controlVar)
   love.graphics.print(label, x + 25, y + 15)
 end
 
+function drawButton(x, y, width, height, label, selected)
+  if selected then
+    love.graphics.setColor(128, 255, 0)
+  else
+    love.graphics.setColor(255, 255, 255)
+  end
+
+  love.graphics.rectangle("line", x, y, width, height)
+  love.graphics.print(label, x + 25, y + 15)
+end
+
 function drawobstacle(x, y, width, height, texture)
   obw = width
   obh = height
   oby = y
   obx = x
   -- Draw the obstacle
-  love.graphics.rectangle("fill", x - camerax, y, width, height)
+  if texture then
+    love.graphics.draw(texture, x - camerax, y, width, height)
+  else
+    love.graphics.rectangle("fill", x - camerax, y, width, height)
+  end
 
   if checkCollision(playerx, playery, playerw, playerh, x, y, width, height) then
     -- If moving left and colliding, revert the player's position
