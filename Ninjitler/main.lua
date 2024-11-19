@@ -1,13 +1,13 @@
--- add tutorial
+-- add tutorial                                         started, will do on train
 -- add scrolling screen function                        done
 -- add controls screen                                  done
 -- add resume button to pause                           done
 -- add quit button to pause                             done
 -- add options button to pause                          done
 -- make pause screen translucent instead of opaque      done
--- add quit and options buttons to main menu            done (not options)
--- make menus navigable through arrow keys and enter
--- add controller functionality
+-- add quit and options buttons to main menu            done (kinda options)
+-- make menus navigable through arrow keys and enter    done
+-- add controller functionality                         next, do on PC
 
 -- total of 10 levels (not including tutorial)
 
@@ -38,9 +38,7 @@ function love.load()
   pause = false
   dialogue = false
 
-  tutorial = false
-  level1 = false
-  level2 = false
+  level = ""
 
   shoottime = 0
 
@@ -87,18 +85,18 @@ function love.load()
   facing = "right"
 
   --sprites
-  rwalk1 = love.graphics.newImage("walk1ninjitler - right.png")
-  rwalk2 = love.graphics.newImage("walk2ninjitler - right.png")
-  rjump = love.graphics.newImage("jumpninjitler - right.png")
-  lwalk1 = love.graphics.newImage("walk1ninjitler - left.png")
-  lwalk2 = love.graphics.newImage("walk2ninjitler - left.png")
-  ljump = love.graphics.newImage("jumpninjitler - left.png")
+  rwalk1 = love.graphics.newImage("sprites/walk1ninjitler - right.png")
+  rwalk2 = love.graphics.newImage("sprites/walk2ninjitler - right.png")
+  rjump = love.graphics.newImage("sprites/jumpninjitler - right.png")
+  lwalk1 = love.graphics.newImage("sprites/walk1ninjitler - left.png")
+  lwalk2 = love.graphics.newImage("sprites/walk2ninjitler - left.png")
+  ljump = love.graphics.newImage("prites/jumpninjitler - left.png")
 
-  weapon1 = love.graphics.newImage("weapon1ninjitler.png")
-  weapon2 = love.graphics.newImage("weapon2ninjitler.png")
+  weapon1 = love.graphics.newImage("sprites/weapon1ninjitler.png")
+  weapon2 = love.graphics.newImage("sprites/weapon2ninjitler.png")
 
-  background = love.graphics.newImage("background.png")
-  tutorialbg = love.graphics.newImage("tutorialbg.png")
+  background = love.graphics.newImage("sprites/background.png")
+  tutorialbg = love.graphics.newImage("sprites/tutorialbg.png")
 
   --spriteframes
   animationFrame = 1
@@ -200,7 +198,7 @@ function love.update(dt)
       if love.keyboard.isDown("space") then
           controls = false
           startgame = true
-          tutorial = true
+          level = "tutorial"
       end
   end
 
@@ -317,7 +315,7 @@ function love.draw()
           --love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
 
           --tutorial
-          if tutorial == true then
+          if level == "tutorial" then
             --background
             love.graphics.draw(tutorialbg, 0, 0)
 
