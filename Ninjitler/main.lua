@@ -8,6 +8,9 @@
 -- add quit and options buttons to main menu            done (kinda options)
 -- make menus navigable through arrow keys and enter    done
 -- add controller functionality                         next, do on PC
+-- add a proper main menu, controls screen, etc.
+-- fix collision
+-- make graphical thing work
 
 -- total of 10 levels (not including tutorial)
 
@@ -20,6 +23,7 @@
 
 -- 1512 x 915
 
+graphical = require("graphical")
 
 function love.load()
   love.window.setMode(1000, 1000, {resizable = true})
@@ -60,7 +64,7 @@ function love.load()
   groundlevelx = 0
   groundlevely = love.graphics.getHeight() - 50
   groundlevelw = love.graphics.getWidth()
-  groundlevelh = 100
+  groundlevelh = 200
 
   playerx = 50
   playery = groundlevely - 100
@@ -90,7 +94,7 @@ function love.load()
   rjump = love.graphics.newImage("sprites/jumpninjitler - right.png")
   lwalk1 = love.graphics.newImage("sprites/walk1ninjitler - left.png")
   lwalk2 = love.graphics.newImage("sprites/walk2ninjitler - left.png")
-  ljump = love.graphics.newImage("prites/jumpninjitler - left.png")
+  ljump = love.graphics.newImage("sprites/jumpninjitler - left.png")
 
   weapon1 = love.graphics.newImage("sprites/weapon1ninjitler.png")
   weapon2 = love.graphics.newImage("sprites/weapon2ninjitler.png")
@@ -124,19 +128,28 @@ function love.load()
   opsoundx = 400
   opsoundy = 400
 
+    if love.joystick.getJoysticks() then
+        joystick = love.joystick.getJoysticks()[1]
+    else 
+        joystick = nil
+    end
+
   --controls
   jump1 = "up"
   jump2 = "w"
-  jump3 = "up"
   moveleft = "left"
   moveleft2 = "a"
-  moveleft3 = "left"
   moveright = "right"
   moveright2 = "d"
-  moveright3 = "right"
   shoot = "x"
   shoot2 = "x"
-  shoot3 = "x"
+
+  if joystick then
+    jump3 = joystick:isGamepadDown('a')
+    shoot3 = joystick:isGamepadDown('x')
+    moveright3 = "d"
+    moveleft3 = "a"
+  end
 
   tempkey = ""
 
@@ -182,14 +195,14 @@ function love.load()
   screenheight = love.graphics.getHeight()
   camerax = 0
   scrollmargin = 250
-  worldwidth = 3200
+  worldwidth = 6400
 
   buttons = {
     {label = "START GAME", x = startBUTTx, y = startBUTTy, width = startBUTTw, height = startBUTTh},
     {label = "OPTIONS", x = optionBUTTx, y = optionBUTTy, width = optionBUTTw, height = optionBUTTh},
     {label = "QUIT", x = sQUITx, y = sQUITy, width = sQUITw, height = sQUITh}
   }
-  selectedButton = 1
+  selectedButton = 0
 end
 
 function love.update(dt)
@@ -229,19 +242,25 @@ function love.update(dt)
         playery = playery + velocityy * dt
     end
 
-    if (playery + playerh >= groundlevely) or (playerx < obx + obw and playerx + playerw > obx and playery + playerh <= oby + 5 and playery + playerh > oby) then
+    if (playery + playerh >= groundlevely) then
       velocityy = 0
       isGrounded = true
       jump = 0
+      playery = groundlevely - (groundlevelh / 2)
+    elseif playerx < obx + obw and playerx + playerw > obx and playery + playerh <= oby + 5 and playery + playerh > oby then
+      velocityy = 0
+      isGrounded = true
+      jump = 0
+      playery = oby - (obh / 2)
     else
       isGrounded = false
     end
-      if love.keyboard.isDown(moveleft) or love.keyboard.isDown(moveleft2) or love.keyboard.isDown(moveleft3) then
+      if love.keyboard.isDown(moveleft) or love.keyboard.isDown(moveleft2) then
           playerx = playerx - playerspeed
           facing = "left"
       end
 
-      if love.keyboard.isDown(moveright) or love.keyboard.isDown(moveright2) or love.keyboard.isDown(moveright3) then
+      if love.keyboard.isDown(moveright) or love.keyboard.isDown(moveright2) then
           playerx = playerx + playerspeed
           facing = "right"
       end
@@ -296,7 +315,7 @@ function love.draw()
           love.graphics.print("NINJITLER", titlex, titley)
 
           for i, button in ipairs(buttons) do
-            drawButton(button.x, button.y, button.width, button.height, button.label, i == selectedButton)
+            graphical.drawButton(button.x, button.y, button.width, button.height, button.label, i == selectedButton)
           end
       end
       --controls
@@ -309,15 +328,10 @@ function love.draw()
           love.graphics.print("press space to continue", love.graphics.getWidth() / 2, love.graphics.getHeight() - 250)
       end
       if startgame == true then
-          --background
-          --love.graphics.draw(background, 0, 0)
-          --ground
-          --love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
-
           --tutorial
           if level == "tutorial" then
             --background
-            love.graphics.draw(tutorialbg, 0, 0)
+            love.graphics.draw(tutorialbg, 0 - camerax, 0)
 
             --ground
             love.graphics.rectangle("fill", groundlevelx, groundlevely, groundlevelw, groundlevelh)
@@ -329,7 +343,8 @@ function love.draw()
             love.graphics.print("Wilkommen aus München! (you're not getting anymore German out of me)", 125 - camerax, 125)
             love.graphics.print("Neville Chamberlain is here. go meet him!", 125 - camerax, 165)
 
-            drawobstacle(1000, 400, 100, 500)
+            graphical.drawobstacle(1000, 800, 100, 250)
+            graphical.drawobstacle(1500, 800, 100, 500)
           end
 
           love.graphics.push()
@@ -390,27 +405,27 @@ function love.draw()
             love.graphics.setColor(255, 255, 255, 255)
             -- Left controls
             love.graphics.print("left", 100, 65)
-            drawControl(175, 50, 200, 50, moveleft, editcontrolsleft1)
-            drawControl(475, 50, 200, 50, moveleft2, editcontrolsleft2)
-            drawControl(775, 50, 200, 50, moveleft3, editcontrolsleft3)
+            graphical.drawControl(175, 50, 200, 50, moveleft, editcontrolsleft1)
+            graphical.drawControl(475, 50, 200, 50, moveleft2, editcontrolsleft2)
+            graphical.drawControl(775, 50, 200, 50, moveleft3, editcontrolsleft3)
 
             -- Right controls
             love.graphics.print("right", 100, 165)
-            drawControl(175, 150, 200, 50, moveright, editcontrolsright1)
-            drawControl(475, 150, 200, 50, moveright2, editcontrolsright2)
-            drawControl(775, 150, 200, 50, moveright3, editcontrolsright3)
+            graphical.drawControl(175, 150, 200, 50, moveright, editcontrolsright1)
+            graphical.drawControl(475, 150, 200, 50, moveright2, editcontrolsright2)
+            graphical.drawControl(775, 150, 200, 50, moveright3, editcontrolsright3)
 
             -- Jump controls
             love.graphics.print("jump", 100, 265)
-            drawControl(175, 250, 200, 50, jump1, editcontrolsjump1)
-            drawControl(475, 250, 200, 50, jump2, editcontrolsjump2)
-            drawControl(775, 250, 200, 50, jump3, editcontrolsjump3)
+            graphical.drawControl(175, 250, 200, 50, jump1, editcontrolsjump1)
+            graphical.drawControl(475, 250, 200, 50, jump2, editcontrolsjump2)
+            graphical.drawControl(775, 250, 200, 50, jump3, editcontrolsjump3)
 
             -- Shoot controls
             love.graphics.print("shoot", 100, 365)
-            drawControl(175, 350, 200, 50, shoot, editcontrolsshoot1)
-            drawControl(475, 350, 200, 50, shoot2, editcontrolsshoot2)
-            drawControl(775, 350, 200, 50, shoot3, editcontrolsshoot3)
+            graphical.drawControl(175, 350, 200, 50, shoot, editcontrolsshoot1)
+            graphical.drawControl(475, 350, 200, 50, shoot2, editcontrolsshoot2)
+            graphical.drawControl(775, 350, 200, 50, shoot3, editcontrolsshoot3)
           end
           --sound settings
           if opsound == true then
@@ -579,7 +594,7 @@ function love.keypressed(key, scancode)
               pause = true
           end
 
-          if key == jump1 or key == jump2 or key == jump3 then
+          if key == jump1 or key == jump2 then
               if isGrounded or jump == 1 then
                   velocityy = -500
                   isGrounded = false
@@ -587,7 +602,7 @@ function love.keypressed(key, scancode)
               end
           end
 
-          if (key == shoot or key == shoot2 or key == shoot3) and shoottime >= 1 then
+          if (key == shoot or key == shoot2) and shoottime >= 1 then
               shootProjectile()
               shoottime = 0
           end
@@ -922,60 +937,4 @@ function shootProjectile()
       direction = facing
   }
   table.insert(projectiles, projectile)
-end
-
-function drawControl(x, y, width, height, label, controlVar)
-  -- Check if we're editing this control
-  if controlVar then
-      love.graphics.setColor(255, 0, 0)  -- Highlight the control in red
-  else
-      love.graphics.setColor(255, 255, 255)  -- Default color
-  end
-  -- Draw the rectangle for the control
-  love.graphics.rectangle("line", x, y, width, height)
-  -- Draw the label
-  love.graphics.print(label, x + 25, y + 15)
-end
-
-function drawButton(x, y, width, height, label, selected)
-  if selected then
-    love.graphics.setColor(128, 255, 0)
-  else
-    love.graphics.setColor(255, 255, 255)
-  end
-
-  love.graphics.rectangle("line", x, y, width, height)
-  love.graphics.print(label, x + 25, y + 15)
-end
-
-function drawobstacle(x, y, width, height, texture)
-  obw = width
-  obh = height
-  oby = y
-  obx = x
-  -- Draw the obstacle
-  if texture then
-    love.graphics.draw(texture, x - camerax, y, width, height)
-  else
-    love.graphics.rectangle("fill", x - camerax, y, width, height)
-  end
-
-  if checkCollision(playerx, playery, playerw, playerh, x, y, width, height) then
-    -- If moving left and colliding, revert the player's position
-    if facing == "left" then
-        playerx = originalX -- Revert to previous position to prevent passing through obstacle
-    end
-    -- If moving right and colliding, revert the player's position
-    if facing == "right" then
-        playerx = originalX -- Revert to previous position to prevent passing through obstacle
-    end
-  end
-end
-
-function checkCollision(px, py, pw, ph, ox, oy, ow, oh)
-  -- Check if player collides with the obstacle using AABB (Axis-Aligned Bounding Box) method
-  return px < ox + ow and
-         px + pw > ox and
-         py < oy + oh and
-         py + ph > oy
 end
