@@ -6,26 +6,36 @@
 -- add options button to pause                          done
 -- make pause screen translucent instead of opaque      done
 -- add quit and options buttons to main menu            done (kinda options)
+-- make options button functional
 -- make menus navigable through arrow keys and enter    done
--- add controller functionality                         next, do on PC
+-- add controller functionality                         will do at some point
 -- add a proper main menu, controls screen, etc.
 -- fix collision
--- make graphical thing work
+-- make graphical thing work                            done
+-- start working on opponents' ai
 
 -- total of 10 levels (not including tutorial)
 
--- Neville Chamberlain = Tutorial Boss (EXTREMELY EASY) in Munich
--- Albert Lebrun (French President) = Level 1 Boss (RELATIVELY EASY) in Paris
--- King Christian X (Danish King) = Level 2 Boss (EASY) in Copenhagen
+-- Neville Chamberlain = Tutorial Boss (EXTREMELY EASY) in Munich                       aikido
+-- Albert Lebrun (French President) = Level 1 Boss (RELATIVELY EASY) in Paris           aikido
+-- King Christian X (Danish King) = Level 2 Boss (EASY) in Copenhagen                   karate
 -- King Leopold III (Belgian King) = Level 3 Boss (SLIGHTLY HARDER) in Brussels
---
--- General Rydz-Śmigły (Polish General) = Level 5 Boss (VERY HARD) in Warsaw
+-- King Haakon VII (Norweigian King) = Level 4 Boss (NORMAL) in Oslo
+-- General Rydz-Śmigły (Polish General) = Level 5 Boss (VERY HARD) in Warsaw            t a n k (in a 7TP)
+-- Samurai(?) Rudolph Hess = Level 6 Boss (NORMAL) in Northern Scotland
+-- Charles de Gaulle = Level 7 Boss (HARDER) in Vichy                                   fencing
+-- Franklin Roosevelt = Level 8 Boss (HARD) in Washington DC                            para-judo
+-- Winston Churchill, Harry Truman, Josef Stalin = Level 9 Boss (VERY HARD) in Berlin
+--       Battle ends with Stalin swearing revenge
+-- Samurai Anne Frank = Level 10 Boss (IMPOSSIBLE) in Führerbunker
+--       you quite literally cannot beat her
 
 -- 1512 x 915
 
 graphical = require("graphical")
 
 function love.load()
+  love.window.setTitle("NINJITLER")
   love.window.setMode(1000, 1000, {resizable = true})
   love.window.maximize()
 
@@ -73,7 +83,6 @@ function love.load()
   playerspeed = 2.5
 
   love.keyboard.setKeyRepeat(true)
-
 
   jump = 0
 
@@ -130,7 +139,7 @@ function love.load()
 
     if love.joystick.getJoysticks() then
         joystick = love.joystick.getJoysticks()[1]
-    else 
+    else
         joystick = nil
     end
 
@@ -149,9 +158,12 @@ function love.load()
     shoot3 = joystick:isGamepadDown('x')
     moveright3 = "d"
     moveleft3 = "a"
+  else
+    jump3 = "up"
+    shoot3 = "x"
+    moveright3 = "d"
+    moveleft3 = "a"
   end
-
-  tempkey = ""
 
   editcontrolsleft1 = false
   editcontrolsleft2 = false
@@ -188,14 +200,14 @@ function love.load()
   sliderValue = 0.5
 
   --music
-  music = love.audio.newSource("music.mp3", "stream")
+  music = love.audio.newSource("sounds/music.mp3", "stream")
   music:setLooping(true)
 
   screenwidth = love.graphics.getWidth()
   screenheight = love.graphics.getHeight()
   camerax = 0
   scrollmargin = 250
-  worldwidth = 6400
+  worldwidth = 6900
 
   buttons = {
     {label = "START GAME", x = startBUTTx, y = startBUTTy, width = startBUTTw, height = startBUTTh},
@@ -206,7 +218,23 @@ function love.load()
 end
 
 function love.update(dt)
+  if startgame == false then
+    -- if mouse hovering over button, highlight the button
+    mouseX = love.mouse.getX()
+    mouseY = love.mouse.getY()
+
+    if mouseX > startBUTTx and mouseX < startBUTTx + startBUTTw and mouseY > startBUTTy and mouseY < startBUTTy + startBUTTh then
+      selectedButton = 1
+    elseif mouseX > optionBUTTx and mouseX < optionBUTTx + optionBUTTw and mouseY > optionBUTTy and mouseY < optionBUTTy + optionBUTTh then
+      selectedButton = 2
+    elseif mouseX > sQUITx and mouseX < sQUITx + sQUITw and mouseY > sQUITy and mouseY < sQUITy + sQUITh then
+      selectedButton = 3
+    else
+      selectedButton = 0
+    end
+  end
   originalX = playerx
+  originalY = playery
   if controls == true then
       if love.keyboard.isDown("space") then
           controls = false
@@ -236,7 +264,6 @@ function love.update(dt)
 
     camerax = math.max(0, math.min(camerax, worldwidth - screenwidth))
 
-
     if not isGrounded then
         velocityy = velocityy + gravity * dt
         playery = playery + velocityy * dt
@@ -247,11 +274,6 @@ function love.update(dt)
       isGrounded = true
       jump = 0
       playery = groundlevely - (groundlevelh / 2)
-    elseif playerx < obx + obw and playerx + playerw > obx and playery + playerh <= oby + 5 and playery + playerh > oby then
-      velocityy = 0
-      isGrounded = true
-      jump = 0
-      playery = oby - (obh / 2)
     else
       isGrounded = false
     end
@@ -290,7 +312,7 @@ function love.update(dt)
         elseif projectile.direction == "left" then
             projectile.x = projectile.x - projectileSpeed * dt
         end
-        if projectile.x > love.graphics.getWidth() + camerax or (projectile.x >= obx and projectile.x <= obx + obw and projectile.y >= oby and projectile.y <= oby + obh) then
+        if projectile.x > love.graphics.getWidth() + camerax then
             table.remove(projectiles, i)
         end
     end
@@ -312,11 +334,20 @@ function love.draw()
   else
       if startgame == false then
           --title
+          love.graphics.setColor(255, 255, 255)
           love.graphics.print("NINJITLER", titlex, titley)
 
           for i, button in ipairs(buttons) do
             graphical.drawButton(button.x, button.y, button.width, button.height, button.label, i == selectedButton)
           end
+      end
+      --options on start
+      if startoptions == true then
+        love.graphics.clear()
+        love.graphics.rectangle("line", opcontrolsx, opcontrolsy, 200, 50) -- edit controls
+          love.graphics.print("controls", opcontrolsx + 75, opcontrolsy + 15)
+          love.graphics.rectangle("line", opsoundx, opsoundy, 200, 50) -- sound
+          love.graphics.print("audio", opsoundx + 75, opsoundy + 15)
       end
       --controls
       if controls == true then
@@ -343,8 +374,9 @@ function love.draw()
             love.graphics.print("Wilkommen aus München! (you're not getting anymore German out of me)", 125 - camerax, 125)
             love.graphics.print("Neville Chamberlain is here. go meet him!", 125 - camerax, 165)
 
-            graphical.drawobstacle(1000, 800, 100, 250)
-            graphical.drawobstacle(1500, 800, 100, 500)
+            graphical.drawobstacle(1000, 750, 100, 750)
+            graphical.drawobstacle(1500, 500, 100, 500)
+            graphical.drawobstacle(1750, 550, 100, 550)
           end
 
           love.graphics.push()
@@ -390,9 +422,9 @@ function love.draw()
         end
           --options
           if options == true then
-            love.graphics.setColor(0, 0, 0, .5)
-            love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-            love.graphics.setColor(255, 255, 255, 255)
+              love.graphics.setColor(0, 0, 0, .5)
+              love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+              love.graphics.setColor(255, 255, 255, 255)
               love.graphics.rectangle("line", opcontrolsx, opcontrolsy, 200, 50) -- edit controls
               love.graphics.print("controls", opcontrolsx + 75, opcontrolsy + 15)
               love.graphics.rectangle("line", opsoundx, opsoundy, 200, 50) -- sound
@@ -404,24 +436,28 @@ function love.draw()
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
             -- Left controls
+            love.graphics.setColor(255, 255, 255)
             love.graphics.print("left", 100, 65)
             graphical.drawControl(175, 50, 200, 50, moveleft, editcontrolsleft1)
             graphical.drawControl(475, 50, 200, 50, moveleft2, editcontrolsleft2)
             graphical.drawControl(775, 50, 200, 50, moveleft3, editcontrolsleft3)
 
             -- Right controls
+            love.graphics.setColor(255, 255, 255)
             love.graphics.print("right", 100, 165)
             graphical.drawControl(175, 150, 200, 50, moveright, editcontrolsright1)
             graphical.drawControl(475, 150, 200, 50, moveright2, editcontrolsright2)
             graphical.drawControl(775, 150, 200, 50, moveright3, editcontrolsright3)
 
             -- Jump controls
+            love.graphics.setColor(255, 255, 255)
             love.graphics.print("jump", 100, 265)
             graphical.drawControl(175, 250, 200, 50, jump1, editcontrolsjump1)
             graphical.drawControl(475, 250, 200, 50, jump2, editcontrolsjump2)
             graphical.drawControl(775, 250, 200, 50, jump3, editcontrolsjump3)
 
             -- Shoot controls
+            love.graphics.setColor(255, 255, 255)
             love.graphics.print("shoot", 100, 365)
             graphical.drawControl(175, 350, 200, 50, shoot, editcontrolsshoot1)
             graphical.drawControl(475, 350, 200, 50, shoot2, editcontrolsshoot2)
@@ -461,8 +497,9 @@ function love.mousepressed(x, y, k)
           if x > startBUTTx and x < startBUTTx + startBUTTw and y > startBUTTy and y < startBUTTy + startBUTTh then
               controls = true
           end
-          --if x > optionBUTTx and x < optionBUTTx + optionBUTTw and y > optionBUTTy and y < optionBUTTy + optionBUTTh then
-          --end
+          if x > optionBUTTx and x < optionBUTTx + optionBUTTw and y > optionBUTTy and y < optionBUTTy + optionBUTTh then
+            startoptions = true
+          end
           if x > sQUITx and x < sQUITx + sQUITw and y > sQUITy and y < sQUITy + sQUITh then
             love.event.quit()
           end
@@ -632,6 +669,7 @@ function love.keypressed(key, scancode)
         end
       end
   end
+  --quit game from start menu
   if startgame == false then
     if key == "escape" then
       love.event.quit()
