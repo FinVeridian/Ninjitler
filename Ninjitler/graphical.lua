@@ -13,7 +13,14 @@ function graphical.drawControl(x, y, width, height, label, controlVar)
     love.graphics.print(label, x + 25, y + 15)
 end
 
-function graphical.drawButton(x, y, width, height, label, selected)
+function graphical.drawButton(texture, selectedtex, x, y, width, height, label, selected)
+  if texture then
+    if selected then
+      love.graphics.draw(selectedtex, x, y, texture:width(), texture:height())
+    else
+      love.graphics.draw(texture, x, y, texture:width(), texture:height())
+    end
+  else
     if selected then
       love.graphics.setColor(128, 255, 0)
     else
@@ -22,8 +29,7 @@ function graphical.drawButton(x, y, width, height, label, selected)
 
     love.graphics.rectangle("line", x, y, width, height)
     love.graphics.print(label, x + 25, y + 15)
-    love.graphics.setColor(255, 255, 255)
-
+  end
 end
 
 function graphical.drawobstacle(x, y, width, height, texture)

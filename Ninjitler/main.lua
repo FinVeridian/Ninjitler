@@ -6,10 +6,10 @@
 -- add options button to pause                          done
 -- make pause screen translucent instead of opaque      done
 -- add quit and options buttons to main menu            done (kinda options)
--- make options button functional
+-- make main menu options button functional
 -- make menus navigable through arrow keys and enter    done
 -- add controller functionality                         will do at some point
--- add a proper main menu, controls screen, etc.
+-- add a proper main menu, controls screen, etc.        designed
 -- fix collision
 -- make graphical thing work                            done
 -- start working on opponents' ai
@@ -317,7 +317,7 @@ function love.update(dt)
         end
     end
   end
-  if opsound == true then
+  if opsound == true or startopsound == true then
     if isDragging then
       local mouseX = love.mouse.getX()
       sliderValue = math.min(math.max((mouseX - sliderX) / sliderWidth, 0), 1)
@@ -348,6 +348,50 @@ function love.draw()
           love.graphics.print("controls", opcontrolsx + 75, opcontrolsy + 15)
           love.graphics.rectangle("line", opsoundx, opsoundy, 200, 50) -- sound
           love.graphics.print("audio", opsoundx + 75, opsoundy + 15)
+      end
+
+      if startopcontrols == true then
+        love.graphics.clear()
+        -- Left controls
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print("left", 100, 65)
+        graphical.drawControl(175, 50, 200, 50, moveleft, editcontrolsleft1)
+        graphical.drawControl(475, 50, 200, 50, moveleft2, editcontrolsleft2)
+        graphical.drawControl(775, 50, 200, 50, moveleft3, editcontrolsleft3)
+
+        -- Right controls
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print("right", 100, 165)
+        graphical.drawControl(175, 150, 200, 50, moveright, editcontrolsright1)
+        graphical.drawControl(475, 150, 200, 50, moveright2, editcontrolsright2)
+        graphical.drawControl(775, 150, 200, 50, moveright3, editcontrolsright3)
+
+        -- Jump controls
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print("jump", 100, 265)
+        graphical.drawControl(175, 250, 200, 50, jump1, editcontrolsjump1)
+        graphical.drawControl(475, 250, 200, 50, jump2, editcontrolsjump2)
+        graphical.drawControl(775, 250, 200, 50, jump3, editcontrolsjump3)
+
+        -- Shoot controls
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print("shoot", 100, 365)
+        graphical.drawControl(175, 350, 200, 50, shoot, editcontrolsshoot1)
+        graphical.drawControl(475, 350, 200, 50, shoot2, editcontrolsshoot2)
+        graphical.drawControl(775, 350, 200, 50, shoot3, editcontrolsshoot3)
+      end
+
+      if startopsound == true then
+        love.graphics.clear()
+        love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.rectangle("fill", sliderX, sliderY, sliderWidth, sliderHeight)
+
+            love.graphics.setColor(0, 0, 0)
+            knobX = sliderX + sliderValue * sliderWidth - 10
+            love.graphics.rectangle("fill", knobX, sliderY - 10, 20, sliderHeight + 20)
+
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print("Volume: " .. math.floor(sliderValue * 100) .. "%", 100, 100)
       end
       --controls
       if controls == true then
@@ -504,6 +548,84 @@ function love.mousepressed(x, y, k)
             love.event.quit()
           end
       end
+      if startoptions == true then
+        if x > opcontrolsx and x < opcontrolsx + 200 and y > opcontrolsy and y < opcontrolsy + 50 then
+          startoptions = false
+          startopcontrols = true
+        end
+        if x > opsoundx and x < opsoundx + 200 and y > opsoundy and y < opsoundy + 50 then
+          startoptions = false
+          startopsound = true
+        end
+      end
+      if startopcontrols == true then
+        --left1
+        if x > 175 and x < 175 + 200 and y > 50 and y < 50 + 50 then
+          editcontrolsleft1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --left2
+        if x > 475 and x < 475 + 200 and y > 50 and y < 50 + 50 then
+          editcontrolsleft2 = true
+          love.keyboard.setTextInput(true)
+
+        end
+        --left3 / controller?
+        if x > 775 and x < 775 + 200 and y > 50 and y < 50 + 50 then
+          editcontrolsleft3 = true
+          love.keyboard.setTextInput(true)
+        end
+        --right1
+        if x > 175 and x < 175 + 200 and y > 150 and y < 50 + 150 then
+          editcontrolsright1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --right2
+        if x > 475 and x < 475 + 200 and y > 150 and y < 150 + 50 then
+          editcontrolsright2 = true
+          love.keyboard.setTextInput(true)
+        end
+        --right3 / controller?
+        if x > 775 and x < 775 + 200 and y > 150 and y < 150 + 50 then
+          editcontrolsright3 = true
+          love.keyboard.setTextInput(true)
+        end
+        --jump1
+        if x > 175 and x < 175 + 200 and y > 250 and y < 250 + 50 then
+          editcontrolsjump1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --jump2
+        if x > 475 and x < 475 + 200 and y > 250 and y < 250 + 50 then
+          editcontrolsjump2 = true
+          love.keyboard.setTextInput(true)
+        end
+        --jump3 / controller?
+        if x > 775 and x < 775 + 200 and y > 250 and y < 250 + 50 then
+          editcontrolsjump3 = true
+          love.keyboard.setTextInput(true)
+        end
+        --shoot1
+        if x > 175 and x < 175 + 200 and y > 350 and y < 350 + 50 then
+          editcontrolsshoot1 = true
+          love.keyboard.setTextInput(true)
+        end
+        --shoot2
+        if x > 475 and x < 475 + 200 and y > 350 and y < 350 + 50 then
+          editcontrolsshoot2 = true
+          love.keyboard.setTextInput(true)
+        end
+        --shoot3 / controller?
+        if x > 775 and x < 775 + 200 and y > 350 and y < 350 + 50 then
+          editcontrolsshoot3 = true
+          love.keyboard.setTextInput(true)
+        end
+      end
+      if startopcound == true then
+        if x >= sliderX and x <= sliderX + sliderWidth and y >= sliderY and y <= sliderY + sliderHeight then
+          isDragging = true
+        end
+      end
       if warning == true then
           warning = false
       end
@@ -520,7 +642,7 @@ function love.mousepressed(x, y, k)
               startgame = false
           end
       end
-      if options == true  or startoptions == true then
+      if options == true then
           if x > opcontrolsx and x < opcontrolsx + 200 and y > opcontrolsy and y < opcontrolsy + 50 then
               options = false
               opcontrols = true
