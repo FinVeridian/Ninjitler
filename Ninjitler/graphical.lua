@@ -16,9 +16,9 @@ end
 function graphical.drawButton(texture, selectedtex, x, y, width, height, label, selected)
   if texture then
     if selected then
-      love.graphics.draw(selectedtex, x, y, texture:width(), texture:height())
+      love.graphics.draw(selectedtex, x, y, 0, width / selectedtex:getWidth(), height / selectedtex:getHeight())
     else
-      love.graphics.draw(texture, x, y, texture:width(), texture:height())
+      love.graphics.draw(texture, x, y, 0, width / texture:getWidth(), height / texture:getHeight())
     end
   else
     if selected then

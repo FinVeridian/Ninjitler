@@ -13,6 +13,7 @@
 -- fix collision
 -- make graphical thing work                            done
 -- start working on opponents' ai
+-- implement sfx
 
 -- total of 10 levels (not including tutorial)
 
@@ -39,8 +40,10 @@ function love.load()
   love.window.setMode(1000, 1000, {resizable = true})
   love.window.maximize()
 
-  titlex = love.graphics.getWidth() / 2 - 25
-  titley = love.graphics.getHeight() / 2
+  font = love.graphics.setNewFont("misc/ninjitlerfont.ttf", 15)
+
+  titlex = love.graphics.getWidth() / 2 - 170
+  titley = love.graphics.getHeight() / 2 - 200
 
   warning = true
   time = 0
@@ -56,8 +59,8 @@ function love.load()
 
   shoottime = 0
 
-  startBUTTx = titlex - 75
-  startBUTTy = titley + 100
+  startBUTTx = titlex + 50
+  startBUTTy = titley + 300
   startBUTTw = 200
   startBUTTh = 50
 
@@ -80,7 +83,7 @@ function love.load()
   playery = groundlevely - 100
   playerw = 50
   playerh = 100
-  playerspeed = 2.5
+  playerspeed = 5
 
   love.keyboard.setKeyRepeat(true)
 
@@ -98,6 +101,11 @@ function love.load()
   facing = "right"
 
   --sprites
+  title = love.graphics.newImage("sprites/buttons/Title.png")
+  pausetitle = love.graphics.newImage("sprites/buttons/Pause.png")
+  controlstitle = love.graphics.newImage("sprites/buttons/controls.png")
+  soundtitle = love.graphics.newImage("sprites/buttons/sound.png")
+
   rwalk1 = love.graphics.newImage("sprites/walk1ninjitler - right.png")
   rwalk2 = love.graphics.newImage("sprites/walk2ninjitler - right.png")
   rjump = love.graphics.newImage("sprites/jumpninjitler - right.png")
@@ -111,6 +119,18 @@ function love.load()
   background = love.graphics.newImage("sprites/background.png")
   tutorialbg = love.graphics.newImage("sprites/tutorialbg.png")
 
+  W = love.graphics.newImage("sprites/buttons/W.png")
+  A = love.graphics.newImage("sprites/buttons/A.png")
+  D = love.graphics.newImage("sprites/buttons/D.png")
+
+  X = love.graphics.newImage("sprites/buttons/X.png")
+
+  imgRight = love.graphics.newImage("sprites/buttons/right.png")
+  imgLeft = love.graphics.newImage("sprites/buttons/left.png")
+  imgUp = love.graphics.newImage("sprites/buttons/up.png")
+
+  slider = love.graphics.newImage("sprites/buttons/slider.png")
+
   --spriteframes
   animationFrame = 1
   animationTime = 0
@@ -122,7 +142,7 @@ function love.load()
 
   --pause menu buttons
   resumebuttx = love.graphics.getWidth() / 2 - 100
-  resumebutty = love.graphics.getHeight() / 2 - 150
+  resumebutty = love.graphics.getHeight() / 2 + 150
 
   optionsbuttx = resumebuttx
   optionsbutty = resumebutty + 100
@@ -192,12 +212,15 @@ function love.load()
   controlsjumpy = 400
 
   --audio menu buttons
-  sliderX = 100
-  sliderY = 200
-  sliderWidth = 400
+  sliderX = love.graphics.getWidth() / 2 - 400
+  volumesliderY = 400
+  sliderWidth = 600
   sliderHeight = 20
 
-  sliderValue = 0.5
+  sfxsliderY = 500
+
+  volumesliderValue = 0.5
+  sfxsliderValue = 0.5
 
   --music
   music = love.audio.newSource("sounds/music.mp3", "stream")
@@ -210,11 +233,24 @@ function love.load()
   worldwidth = 6900
 
   buttons = {
-    {label = "START GAME", x = startBUTTx, y = startBUTTy, width = startBUTTw, height = startBUTTh},
-    {label = "OPTIONS", x = optionBUTTx, y = optionBUTTy, width = optionBUTTw, height = optionBUTTh},
-    {label = "QUIT", x = sQUITx, y = sQUITy, width = sQUITw, height = sQUITh}
+    {texture = love.graphics.newImage("sprites/buttons/start button.png"), selectedtex = love.graphics.newImage("sprites/buttons/start button selected.png"), 
+    label = "START", x = startBUTTx, y = startBUTTy, width = startBUTTw, height = startBUTTh},
+    {texture = love.graphics.newImage("sprites/buttons/options button.png"), selectedtex = love.graphics.newImage("sprites/buttons/options button selected.png"), 
+    label = "OPTIONS", x = optionBUTTx, y = optionBUTTy, width = optionBUTTw, height = optionBUTTh},
+    {texture = love.graphics.newImage("sprites/buttons/quit button.png"), selectedtex = love.graphics.newImage("sprites/buttons/quit button selected.png"), 
+    label = "QUIT", x = sQUITx, y = sQUITy, width = sQUITw, height = sQUITh}
   }
-  selectedButton = 0
+
+  pausebuttons = {
+    {texture = love.graphics.newImage("sprites/buttons/resume button.png"), selectedtex = love.graphics.newImage("sprites/buttons/resume button selected.png"), 
+    label = "RESUME", x = resumebuttx, y = resumebutty, width = 200, height = 50},
+    {texture = love.graphics.newImage("sprites/buttons/options button.png"), selectedtex = love.graphics.newImage("sprites/buttons/options button selected.png"), 
+    label = "OPTIONS", x = optionsbuttx, y = optionsbutty, width = 200, height = 50},
+    {texture = love.graphics.newImage("sprites/buttons/quit button.png"), selectedtex = "sprites/buttons/quit button selected.png", 
+    label = "QUIT", x = quitbuttx, y = quitbutty, width = 200, height = 50}
+  }
+  startSelectedButton = 0
+  pauseSelectedButton = 0
 end
 
 function love.update(dt)
@@ -224,13 +260,13 @@ function love.update(dt)
     mouseY = love.mouse.getY()
 
     if mouseX > startBUTTx and mouseX < startBUTTx + startBUTTw and mouseY > startBUTTy and mouseY < startBUTTy + startBUTTh then
-      selectedButton = 1
+      startSelectedButton = 1
     elseif mouseX > optionBUTTx and mouseX < optionBUTTx + optionBUTTw and mouseY > optionBUTTy and mouseY < optionBUTTy + optionBUTTh then
-      selectedButton = 2
+      startSelectedButton = 2
     elseif mouseX > sQUITx and mouseX < sQUITx + sQUITw and mouseY > sQUITy and mouseY < sQUITy + sQUITh then
-      selectedButton = 3
+      startSelectedButton = 3
     else
-      selectedButton = 0
+      startSelectedButton = 0
     end
   end
   originalX = playerx
@@ -245,6 +281,18 @@ function love.update(dt)
 
   if startgame == true then
     music:play(music)
+  end
+
+  if pause == true then
+    if mouseX > resumebuttx and mouseX < resumebuttx + 200 and mouseY > resumebutty and mouseY < resumebutty + 50 then
+      pauseSelectedButton = 1
+    elseif mouseX > optionsbuttx and mouseX < optionsbuttx + 200 and mouseY > optionsbutty and mouseY < optionsbutty + 50 then
+      pauseSelectedButton = 2
+    elseif mouseX > quitbuttx and mouseX < quitbuttx + 200 and mouseY > quitbutty and mouseY < quitbutty + 50 then
+      pauseSelectedButton = 3
+    else
+      pauseSelectedButton = 0
+    end
   end
 
   if pause == false and startgame == true and options == false and opsound == false and opcontrols == false and dialogue == false then
@@ -318,10 +366,15 @@ function love.update(dt)
     end
   end
   if opsound == true or startopsound == true then
-    if isDragging then
+    if isDraggingVol then
       local mouseX = love.mouse.getX()
-      sliderValue = math.min(math.max((mouseX - sliderX) / sliderWidth, 0), 1)
-      music:setVolume(sliderValue)  -- Set music volume to the slider value
+      volumesliderValue = math.min(math.max((mouseX - sliderX) / sliderWidth, 0), 1)
+      music:setVolume(volumesliderValue)  -- Set music volume to the slider value
+    end
+    if isDraggingSFX then
+      local mouseX = love.mouse.getX()
+      sfxsliderValue = math.min(math.max((mouseX - sliderX) / sliderWidth, 0), 1)
+      music:setVolume(sfxsliderValue)  -- Set music volume to the slider value
     end
   end
 end
@@ -329,16 +382,16 @@ end
 function love.draw()
   if warning == true then
       love.graphics.clear()
-      love.graphics.print("i am jewish, so this is ok", titlex, titley)
-      love.graphics.print("- the developer", titlex, titley + 50)
+      love.graphics.print("I AM JEWISH SO THIS IS OK", titlex, titley)
+      love.graphics.print("- THE DEVELOPER", titlex, titley + 50)
   else
       if startgame == false then
           --title
           love.graphics.setColor(255, 255, 255)
-          love.graphics.print("NINJITLER", titlex, titley)
+          love.graphics.draw(title, titlex, titley)
 
           for i, button in ipairs(buttons) do
-            graphical.drawButton(button.x, button.y, button.width, button.height, button.label, i == selectedButton)
+            graphical.drawButton(button.texture, button.selectedtex, button.x, button.y, button.width, button.height, button.label, i == selectedButton)
           end
       end
       --options on start
@@ -396,11 +449,36 @@ function love.draw()
       --controls
       if controls == true then
           love.graphics.clear()
-          love.graphics.print(moveleft .. " or " .. moveleft2 .. " to move left", 100, 100)
-          love.graphics.print(moveright .. " or " .. moveright2 .. " to move right", 100, 150)
-          love.graphics.print(shoot  .. " to shoot swastiken", 100, 200)
-          love.graphics.print(jump1 .. " or " .. jump2 .. " to jump", 100, 250)
-          love.graphics.print("press space to continue", love.graphics.getWidth() / 2, love.graphics.getHeight() - 250)
+          --love.graphics.print(moveleft .. " or " .. moveleft2 .. " to move left", 100, 100)
+          --love.graphics.print(moveright .. " or " .. moveright2 .. " to move right", 100, 150)
+          --love.graphics.print(shoot  .. " to shoot swastiken", 100, 200)
+          --love.graphics.print(jump1 .. " or " .. jump2 .. " to jump", 100, 250)
+
+          love.graphics.draw(controlstitle, love.graphics.getWidth() / 2 - 127, 100)
+
+          love.graphics.draw(imgLeft, 100, 300)
+          love.graphics.print(" or ", 155, 325)
+          love.graphics.draw(A, 190, 300)
+          love.graphics.print("to move left", 245, 325)
+
+          love.graphics.draw(imgRight, 100, 375)
+          love.graphics.print(" or ", 155, 400)
+          love.graphics.draw(D, 190, 375)
+          love.graphics.print("to move right", 245, 400)
+
+          love.graphics.draw(imgUp, 100, 450)
+          love.graphics.print(" or ", 155, 475)
+          love.graphics.draw(W, 190, 450)
+          love.graphics.print("to jump", 245, 475)
+
+          love.graphics.draw(X, 100, 525)
+          love.graphics.print(" or ", 155, 550)
+          love.graphics.draw(X, 190, 525)
+          love.graphics.print("to shoot", 245, 550)
+
+          love.graphics.print("[controls can be changed]", love.graphics.getWidth() / 2 - 121, love.graphics.getHeight() - 50)
+
+          love.graphics.print("press space to continue", love.graphics.getWidth() / 2 - 115, love.graphics.getHeight() - 250)
       end
       if startgame == true then
           --tutorial
@@ -413,7 +491,7 @@ function love.draw()
 
             --welcome text
             love.graphics.setColor(0, 0, 0, .8)
-            love.graphics.rectangle("fill", 100 - camerax, 100, 500, 100)
+            love.graphics.rectangle("fill", 100 - camerax, 100, 675, 100)
             love.graphics.setColor(255, 255, 255, 1)
             love.graphics.print("Wilkommen aus München! (you're not getting anymore German out of me)", 125 - camerax, 125)
             love.graphics.print("Neville Chamberlain is here. go meet him!", 125 - camerax, 165)
@@ -457,12 +535,12 @@ function love.draw()
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
 
-            love.graphics.rectangle("line", resumebuttx, resumebutty, 200, 50) -- resume
-            love.graphics.print("resume", resumebuttx + 75, resumebutty + 15)
-            love.graphics.rectangle("line", optionsbuttx, optionsbutty, 200, 50) -- options
-            love.graphics.print("options", optionsbuttx + 75, optionsbutty + 15)
-            love.graphics.rectangle("line", quitbuttx, quitbutty, 200, 50) -- quit
-            love.graphics.print("quit", quitbuttx + 75, quitbutty + 15)
+            love.graphics.draw(pausetitle, titlex + 75, titley)
+
+            for i, pausebuttons in ipairs(pausebuttons) do
+              graphical.drawButton(pausebuttons.texture, pausebuttons.selectedtex, pausebuttons.x, pausebuttons.y, pausebuttons.width, pausebuttons.height, 
+              pausebuttons.label, i == selectedButton)
+            end
         end
           --options
           if options == true then
@@ -513,15 +591,25 @@ function love.draw()
             love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
             love.graphics.setColor(255, 255, 255, 255)
 
-            love.graphics.setColor(0.5, 0.5, 0.5)
-            love.graphics.rectangle("fill", sliderX, sliderY, sliderWidth, sliderHeight)
+            love.graphics.draw(soundtitle, love.graphics.getWidth() / 2 - 180, 150)
 
-            love.graphics.setColor(0, 0, 0)
-            knobX = sliderX + sliderValue * sliderWidth - 10
-            love.graphics.rectangle("fill", knobX, sliderY - 10, 20, sliderHeight + 20)
+            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.rectangle("fill", sliderX, volumesliderY, sliderWidth, sliderHeight)
+
+            volumeknobX = sliderX + volumesliderValue * sliderWidth - 10
+            love.graphics.draw(slider, volumeknobX, volumesliderY - 10)
 
             love.graphics.setColor(1, 1, 1)
-            love.graphics.print("Volume: " .. math.floor(sliderValue * 100) .. "%", 100, 100)
+            love.graphics.print("Volume: " .. math.floor(volumesliderValue * 100) .. "%", love.graphics.getWidth() / 2 - 150, 350)
+
+            love.graphics.setColor(0.5, 0.5, 0.5)
+            love.graphics.rectangle("fill", sliderX, sfxsliderY, sliderWidth, sliderHeight)
+
+            sfxknobX = sliderX + sfxsliderValue * sliderWidth - 10
+            love.graphics.draw(slider, sfxknobX, sfxsliderY - 10)
+
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.print("SFX: " .. math.floor(sfxsliderValue * 100) .. "%", love.graphics.getWidth() / 2 - 130, 450)
           end
           --projectiles
           for _, projectile in ipairs(projectiles) do
@@ -640,6 +728,7 @@ function love.mousepressed(x, y, k)
           if x > quitbuttx and x < quitbuttx + 200 and y > quitbutty and y < quitbutty + 50 then
               pause = false
               startgame = false
+              music:pause()
           end
       end
       if options == true then
@@ -716,8 +805,11 @@ function love.mousepressed(x, y, k)
         end
       end
       if opsound == true then
-        if x >= sliderX and x <= sliderX + sliderWidth and y >= sliderY and y <= sliderY + sliderHeight then
-          isDragging = true
+        if x >= sliderX and x <= sliderX + sliderWidth and y >= volumesliderY and y <= volumesliderY + sliderHeight then
+          isDraggingVol = true
+        end
+        if x >= sliderX and x <= sliderX + sliderWidth and y >= sfxsliderY and y <= sfxsliderY + sliderHeight then
+          isDraggingSFX = true
         end
       end
   end
@@ -725,11 +817,17 @@ end
 
 function love.mousereleased(x, y, k)
   if opsound == true then
-    isDragging = false
+    isDraggingVol = false
+    isDraggingSFX = false
   end
 end
 
 function love.keypressed(key, scancode)
+  if warning == true then
+    if key == "return" then
+      warning = false
+    end
+  end
   if startgame == false and warning == false and controls == false then
     if key == "down" then
       selectedButton = selectedButton % #buttons + 1
